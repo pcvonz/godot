@@ -6022,13 +6022,16 @@ EditorNode::EditorNode() {
 	dock_select->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	dock_vb->add_child(dock_select);
 
-	dock_float = memnew(Button);
-	dock_float->set_text(TTR("Make Floating"));
-	dock_float->set_focus_mode(Control::FOCUS_NONE);
-	dock_float->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
-	dock_float->connect("pressed", callable_mp(this, &EditorNode::_dock_make_float));
-
-	dock_vb->add_child(dock_float);
+	bool single_window_mode = EditorSettings::get_singleton()->get_setting(
+			"interface/editor/single_window_mode");
+	if (!single_window_mode) {
+		dock_float = memnew(Button);
+		dock_float->set_text(TTR("Make Floating"));
+		dock_float->set_focus_mode(Control::FOCUS_NONE);
+		dock_float->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
+		dock_float->connect("pressed", callable_mp(this, &EditorNode::_dock_make_float));
+		dock_vb->add_child(dock_float);
+	}
 
 	dock_select_popup->set_as_minsize();
 	dock_select_rect_over = -1;
