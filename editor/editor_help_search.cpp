@@ -138,6 +138,13 @@ void EditorHelpSearch::_update_results() {
 	const String term = search_box->get_text().strip_edges();
 
 	int search_flags = filter_combo->get_selected_id();
+	if (local_button->is_pressed()) {
+		search_flags |= SEARCH_LOCAL;
+	}
+
+	if (addon_button->is_pressed()) {
+		search_flags |= SEARCH_ADDONS;
+	}
 
 	// Process separately if term is not short, or is "@" for annotations.
 	if (term.length() > 1 || term == "@") {
@@ -246,6 +253,8 @@ void EditorHelpSearch::_notification(int p_what) {
 
 			case_sensitive_button->set_button_icon(get_editor_theme_icon(SNAME("MatchCase")));
 			hierarchy_button->set_button_icon(get_editor_theme_icon(SNAME("ClassList")));
+			local_button->set_button_icon(get_editor_theme_icon(SNAME("Script")));
+			addon_button->set_button_icon(get_editor_theme_icon(SNAME("Add")));
 
 			if (is_visible()) {
 				_update_results();
@@ -353,6 +362,24 @@ EditorHelpSearch::EditorHelpSearch() {
 	hierarchy_button->set_pressed(true);
 	hierarchy_button->set_focus_mode(Control::FOCUS_NONE);
 	hbox->add_child(hierarchy_button);
+
+	local_button = memnew(Button);
+	local_button->set_theme_type_variation(SceneStringName(FlatButton));
+	local_button->set_tooltip_text(TTR("Filter Show Documentation For Local Scripts"));
+	local_button->connect(SceneStringName(pressed), callable_mp(this, &EditorHelpSearch::_update_results));
+	local_button->set_toggle_mode(true);
+	local_button->set_pressed(false);
+	local_button->set_focus_mode(Control::FOCUS_NONE);
+	hbox->add_child(local_button);
+
+	addon_button = memnew(Button);
+	addon_button->set_theme_type_variation(SceneStringName(FlatButton));
+	addon_button->set_tooltip_text(TTR("Filter Show Documentation For Local Addon Scripts"));
+	addon_button->connect(SceneStringName(pressed), callable_mp(this, &EditorHelpSearch::_update_results));
+	addon_button->set_toggle_mode(true);
+	addon_button->set_pressed(false);
+	addon_button->set_focus_mode(Control::FOCUS_NONE);
+	hbox->add_child(addon_button);
 
 	filter_combo = memnew(OptionButton);
 	filter_combo->set_custom_minimum_size(Size2(200, 0) * EDSCALE);
@@ -487,16 +514,24 @@ bool EditorHelpSearch::Runner::_phase_fill_classes() {
 		}
 
 		// If class matches the flags, add it to the matched stack.
-		const bool class_matched =
-				(search_flags & SEARCH_CLASSES) ||
-				((search_flags & SEARCH_CONSTRUCTORS) && !class_doc->constructors.is_empty()) ||
-				((search_flags & SEARCH_METHODS) && !class_doc->methods.is_empty()) ||
-				((search_flags & SEARCH_OPERATORS) && !class_doc->operators.is_empty()) ||
-				((search_flags & SEARCH_SIGNALS) && !class_doc->signals.is_empty()) ||
-				((search_flags & SEARCH_CONSTANTS) && !class_doc->constants.is_empty()) ||
-				((search_flags & SEARCH_PROPERTIES) && !class_doc->properties.is_empty()) ||
-				((search_flags & SEARCH_THEME_ITEMS) && !class_doc->theme_properties.is_empty()) ||
-				((search_flags & SEARCH_ANNOTATIONS) && !class_doc->annotations.is_empty());
+		bool class_matched =
+				((search_flags & SEARCH_CLASSES) ||
+						((search_flags & SEARCH_CONSTRUCTORS) && !class_doc->constructors.is_empty()) ||
+						((search_flags & SEARCH_METHODS) && !class_doc->methods.is_empty()) ||
+						((search_flags & SEARCH_OPERATORS) && !class_doc->operators.is_empty()) ||
+						((search_flags & SEARCH_SIGNALS) && !class_doc->signals.is_empty()) ||
+						((search_flags & SEARCH_CONSTANTS) && !class_doc->constants.is_empty()) ||
+						((search_flags & SEARCH_PROPERTIES) && !class_doc->properties.is_empty()) ||
+						((search_flags & SEARCH_THEME_ITEMS) && !class_doc->theme_properties.is_empty()) ||
+						((search_flags & SEARCH_ANNOTATIONS) && !class_doc->annotations.is_empty()));
+
+		if ((search_flags & SEARCH_LOCAL) && !(search_flags & SEARCH_ADDONS)) {
+			class_matched = class_doc->is_script_doc && !class_doc->script_path.contains("addons");
+		} else if ((search_flags & SEARCH_LOCAL) && (search_flags & SEARCH_ADDONS)) {
+			class_matched = class_doc->is_script_doc || class_doc->script_path.contains("addons");
+		} else if (search_flags & SEARCH_ADDONS) {
+			class_matched = class_doc->script_path.contains("addons");
+		}
 
 		if (class_matched) {
 			if (term.is_empty() || class_doc->name.containsn(term)) {

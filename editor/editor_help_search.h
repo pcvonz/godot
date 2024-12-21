@@ -51,14 +51,18 @@ class EditorHelpSearch : public ConfirmationDialog {
 		SEARCH_PROPERTIES = 1 << 6,
 		SEARCH_THEME_ITEMS = 1 << 7,
 		SEARCH_ANNOTATIONS = 1 << 8,
+		SEARCH_LOCAL = 1 << 9,
+		SEARCH_ADDONS = 1 << 10,
 		SEARCH_ALL = SEARCH_CLASSES | SEARCH_CONSTRUCTORS | SEARCH_METHODS | SEARCH_OPERATORS | SEARCH_SIGNALS | SEARCH_CONSTANTS | SEARCH_PROPERTIES | SEARCH_THEME_ITEMS | SEARCH_ANNOTATIONS,
 		SEARCH_CASE_SENSITIVE = 1 << 29,
-		SEARCH_SHOW_HIERARCHY = 1 << 30
+		SEARCH_SHOW_HIERARCHY = 1 << 30,
 	};
 
 	LineEdit *search_box = nullptr;
 	Button *case_sensitive_button = nullptr;
 	Button *hierarchy_button = nullptr;
+	Button *local_button = nullptr;
+	Button *addon_button = nullptr;
 	OptionButton *filter_combo = nullptr;
 	Tree *results_tree = nullptr;
 	bool old_search = false;
